@@ -1,12 +1,53 @@
 import re
 import time
+import string
+import sys
 
 def main():
-	weightedPatients = [[38, 109], [38, 120], [38, 123], [38, 142], [39, 19], [39, 34], [39, 93], [40, 47], [40, 86], [41, 50], [41, 72], [41, 108], [42, 17], [42, 25], [42, 37], [42, 40], [42, 60], [42, 62], [42, 78], [42, 144], [43, 6], [43, 15], [43, 49], [43, 116], [44, 89], [44, 92], [47, 65], [48, 76], [48, 90], [50, 110]]
-	hospital = readAndParse()
-	# print hospital[0]
-	hospitalSurvival = getImportantData(hospital)
-	weightedAverages(weightedPatients,hospitalSurvival)
+	for np in readAndParse():
+		hospital = readAndParseGEOIUHGFQE()
+		# print hospital
+		hospitalSurvivalData = getImportantData(hospital)
+		reduction(hospital,np)
+		weightedPatients = returnSimilar(hospital,np)
+		hospital = readAndParseGEOIUHGFQE()
+		weightedAverages(weightedPatients,hospitalSurvivalData)
+
+def is_number(s):
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False
+
+def returnSimilar(hospitalData, testPatientData, threshold = 0.33):
+	solutionSet = []
+	for patient in hospitalData:
+		similarityPoints=0
+		for j in range(1,len(patient)-5):
+			#compare current value with testPatientData[i]
+
+			if is_number(patient[j]) and is_number(testPatientData[j]):
+				if ((float(patient[j])+float(testPatientData[j])) != 0):
+					if (abs(((float(patient[j]) - float(testPatientData[j]))/(0.5*(float(patient[j])+float(testPatientData[j])))))<threshold):
+						if (j == 169 or j==170 or j==142):
+							similarityPoints += 5
+						else:
+							similarityPoints+=1
+			else:
+				if (patient[j] == testPatientData[j]):
+					similarityPoints += 1
+		ptnumber = int(re.sub("\D", "", patient[0]))
+		solutionSet.append([similarityPoints,ptnumber])
+	solutionSet.sort()
+	return solutionSet[-30:]
+
+def reduction(hospitalData, testPatientData):
+	for patient in hospitalData:
+			if patient[1] != testPatientData[1]:
+				del patient
+			elif patient[10] != testPatientData[10]:
+				del patient
 
 def weightedAverages(patientWeights,hospital):
 	weightDivisor = 0
@@ -30,7 +71,7 @@ def weightedAverages(patientWeights,hospital):
 	
 	print "chance_of_remission:", removeOutliers(chance_of_remission)
 	print "days_of_remission:",removeOutliers(days_of_remission)
-	# print "days_of_survival:",removeOutliers(days_of_survival)
+	print "days_of_survival:",removeOutliers(days_of_survival)
 
 def getImportantData(patientData):
 	ifTheyDiedOrNot = []
@@ -45,7 +86,9 @@ def getImportantData(patientData):
 	return ifTheyDiedOrNot
 
 def removeOutliers(numList):
-	removed = 0
+	numList.sort()
+	removeList = []
+	j = 0
 	for i in range(0, len(numList)):			
 		numSum = 0
 		average = 0
@@ -58,14 +101,16 @@ def removeOutliers(numList):
 		average = numSum/(len(numList)-1)
 		percentError = float((average - numList[i]))/average * 100
 		if(percentError < 80):
-			numList.remove(numList[i])
-			i-=1
-			print numList
+			removeList.append(numList[i])
 		if(i == len(numList)-1):
 			break
+	for word in removeList:
+		numList.remove(word)
+	return sum(numList)
 
-def readAndParse():
-	f = open("trainingData.txt","r")
+def readAndParseGEOIUHGFQE():
+	# f = sys.stdin.read()
+	f = open("trainingData.in","r")
 	pattern = re.compile("train_id_\d\d\d")
 	raw = f.read()
 	f.close()
@@ -82,5 +127,24 @@ def readAndParse():
 	parsed.append(tempParsed)
 	return parsed
 
+def readAndParse():
+	f = sys.stdin.read()
+	# f = open("trainingData.txt","r")
+	pattern = re.compile("train_id_\d\d\d")
+	# raw = f.read()
+	# f.close()
+	parsed = []
+	tempParsed = []
+	for word in f.split():
+		if pattern.match(word):
+			if tempParsed:
+				parsed.append(tempParsed)
+				tempParsed = []
+			tempParsed.append(word)
+		else:
+			tempParsed.append(word.lower())
+	parsed.append(tempParsed)
+	return parsed
+
 if __name__ == '__main__':
-	# main()
+	main()

@@ -1,7 +1,10 @@
-numList = [1,2,3,4,5,6,200,7,8,300,50,40,100,1]
+numList = [1,2,3,200, 2, 400, 6, 2000, 300, 600]
+
 def removeOutliers(numList):
-	print len(numList)
-	removed = 0
+	numList.sort()
+	removeList = []
+	j = 0
+
 	for i in range(0, len(numList)):			
 		numSum = 0
 		average = 0
@@ -17,10 +20,13 @@ def removeOutliers(numList):
 		percentError = float((average - numList[i]))/average * 100
 		print percentError
 		if(percentError < 80):
-			numList.remove(numList[i])
-			i-=1
-			print numList
+			removeList.append(numList[i])
+			print removeList
 		if(i == len(numList)-1):
 			break
+	for word in removeList:
+		numList.remove(word)
+	print numList
 
+	
 removeOutliers(numList)
